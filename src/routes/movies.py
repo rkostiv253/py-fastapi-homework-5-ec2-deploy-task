@@ -4,24 +4,26 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from database import get_db, MovieModel
-from database import (
+from src.database import MovieModel
+from src.database.session_postgresql import get_postgresql_db
+from src.database import (
     CountryModel,
     GenreModel,
     ActorModel,
     LanguageModel
 )
-from schemas import (
+from src.schemas.movies import (
     MovieListResponseSchema,
     MovieListItemSchema,
-    MovieDetailSchema
+    MovieDetailSchema,
+    MovieCreateSchema,
+    MovieUpdateSchema
 )
-from schemas.movies import MovieCreateSchema, MovieUpdateSchema
 
-router = APIRouter()
+movie_router = APIRouter()
 
 
-@router.get(
+@movie_router.get(
     "/movies/",
     response_model=MovieListResponseSchema,
     summary="Get a paginated list of movies",
@@ -45,7 +47,7 @@ router = APIRouter()
 async def get_movie_list(
         page: int = Query(1, ge=1, description="Page number (1-based index)"),
         per_page: int = Query(10, ge=1, le=20, description="Number of items per page"),
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_postgresql_db),
 ) -> MovieListResponseSchema:
     """
     Fetch a paginated list of movies from the database (asynchronously).
@@ -102,7 +104,7 @@ async def get_movie_list(
     return response
 
 
-@router.post(
+@movie_router.post(
     "/movies/",
     response_model=MovieDetailSchema,
     summary="Add a new movie",
@@ -129,7 +131,7 @@ async def get_movie_list(
 )
 async def create_movie(
         movie_data: MovieCreateSchema,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_postgresql_db)
 ) -> MovieDetailSchema:
     """
     Add a new movie to the database.
@@ -235,7 +237,7 @@ async def create_movie(
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
-@router.get(
+@movie_router.get(
     "/movies/{movie_id}/",
     response_model=MovieDetailSchema,
     summary="Get movie details by ID",
@@ -258,7 +260,7 @@ async def create_movie(
 )
 async def get_movie_by_id(
         movie_id: int,
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_postgresql_db),
 ) -> MovieDetailSchema:
     """
     Retrieve detailed information about a specific movie by its ID.
@@ -299,7 +301,7 @@ async def get_movie_by_id(
     return MovieDetailSchema.model_validate(movie)
 
 
-@router.delete(
+@movie_router.delete(
     "/movies/{movie_id}/",
     summary="Delete a movie by ID",
     description=(
@@ -324,7 +326,7 @@ async def get_movie_by_id(
 )
 async def delete_movie(
         movie_id: int,
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_postgresql_db),
 ):
     """
     Delete a specific movie by its ID.
@@ -358,7 +360,7 @@ async def delete_movie(
     return {"detail": "Movie deleted successfully."}
 
 
-@router.patch(
+@movie_router.patch(
     "/movies/{movie_id}/",
     summary="Update a movie by ID",
     description=(
@@ -388,7 +390,7 @@ async def delete_movie(
 async def update_movie(
         movie_id: int,
         movie_data: MovieUpdateSchema,
-        db: AsyncSession = Depends(get_db),
+        db: AsyncSession = Depends(get_postgresql_db),
 ):
     """
     Update a specific movie by its ID.
