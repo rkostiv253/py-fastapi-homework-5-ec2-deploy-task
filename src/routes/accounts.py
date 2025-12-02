@@ -7,8 +7,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.config import get_jwt_auth_manager, get_settings, BaseAppSettings, get_accounts_email_notificator
-from src.database import (
+from config import get_jwt_auth_manager, get_settings, BaseAppSettings, get_accounts_email_notificator
+from database import (
+    get_db,
     UserModel,
     UserGroupModel,
     UserGroupEnum,
@@ -16,10 +17,9 @@ from src.database import (
     PasswordResetTokenModel,
     RefreshTokenModel
 )
-from src.database.session_postgresql import get_postgresql_db
-from src.exceptions import BaseSecurityError
-from src.notifications import EmailSenderInterface
-from src.schemas.accounts import (
+from exceptions import BaseSecurityError
+from notifications import EmailSenderInterface
+from schemas import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
     MessageResponseSchema,
@@ -31,12 +31,12 @@ from src.schemas.accounts import (
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema
 )
-from src.security.interfaces import JWTAuthManagerInterface
+from security.interfaces import JWTAuthManagerInterface
 
-account_router = APIRouter()
+router = APIRouter()
 
 
-@account_router.post(
+@router.post(
     "/register/",
     response_model=UserRegistrationResponseSchema,
     summary="User Registration",
@@ -67,7 +67,7 @@ account_router = APIRouter()
 )
 async def register_user(
         user_data: UserRegistrationRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> UserRegistrationResponseSchema:
     """
@@ -139,7 +139,7 @@ async def register_user(
         return UserRegistrationResponseSchema.model_validate(new_user)
 
 
-@account_router.post(
+@router.post(
     "/activate/",
     response_model=MessageResponseSchema,
     summary="Activate User Account",
@@ -172,7 +172,7 @@ async def register_user(
 )
 async def activate_account(
         activation_data: UserActivationRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator),
 ) -> MessageResponseSchema:
     """
@@ -239,7 +239,7 @@ async def activate_account(
     return MessageResponseSchema(message="User account activated successfully.")
 
 
-@account_router.post(
+@router.post(
     "/password-reset/request/",
     response_model=MessageResponseSchema,
     summary="Request Password Reset Token",
@@ -251,7 +251,7 @@ async def activate_account(
 )
 async def request_password_reset_token(
         data: PasswordResetRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator)
 ) -> MessageResponseSchema:
     """
@@ -295,7 +295,7 @@ async def request_password_reset_token(
     )
 
 
-@account_router.post(
+@router.post(
     "/reset-password/complete/",
     response_model=MessageResponseSchema,
     summary="Reset User Password",
@@ -340,7 +340,7 @@ async def request_password_reset_token(
 )
 async def reset_password(
         data: PasswordResetCompleteRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         email_sender: EmailSenderInterface = Depends(get_accounts_email_notificator)
 ) -> MessageResponseSchema:
     """
@@ -415,7 +415,7 @@ async def reset_password(
     return MessageResponseSchema(message="Password reset successfully.")
 
 
-@account_router.post(
+@router.post(
     "/login/",
     response_model=UserLoginResponseSchema,
     summary="User Login",
@@ -456,7 +456,7 @@ async def reset_password(
 )
 async def login_user(
         login_data: UserLoginRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         settings: BaseAppSettings = Depends(get_settings),
         jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> UserLoginResponseSchema:
@@ -522,7 +522,7 @@ async def login_user(
     )
 
 
-@account_router.post(
+@router.post(
     "/refresh/",
     response_model=TokenRefreshResponseSchema,
     summary="Refresh Access Token",
@@ -563,7 +563,7 @@ async def login_user(
 )
 async def refresh_access_token(
         token_data: TokenRefreshRequestSchema,
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
 ) -> TokenRefreshResponseSchema:
     """

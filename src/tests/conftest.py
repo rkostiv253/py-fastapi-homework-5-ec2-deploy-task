@@ -3,20 +3,20 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import get_settings, get_accounts_email_notificator, get_s3_storage_client
-from src.database import (
+from config import get_settings, get_accounts_email_notificator, get_s3_storage_client
+from database import (
     reset_database,
+    get_db_contextmanager,
     UserGroupEnum,
     UserGroupModel
 )
-from src.database.session_postgresql import get_postgresql_db_contextmanager
-from src.database.populate import CSVDatabaseSeeder
-from src.main import app
-from src.security.interfaces import JWTAuthManagerInterface
-from src.security.token_manager import JWTAuthManager
-from src.storages.s3 import S3StorageClient
-from src.tests.doubles.fakes.storage import FakeS3Storage
-from src.tests.doubles.stubs.emails import StubEmailSender
+from database.populate import CSVDatabaseSeeder
+from main import app
+from security.interfaces import JWTAuthManagerInterface
+from security.token_manager import JWTAuthManager
+from storages import S3StorageClient
+from tests.doubles.fakes.storage import FakeS3Storage
+from tests.doubles.stubs.emails import StubEmailSender
 
 
 def pytest_configure(config):
@@ -138,7 +138,7 @@ async def db_session():
     This fixture yields an async session using `get_db_contextmanager`, ensuring that the session
     is properly closed after each test.
     """
-    async with get_postgresql_db_contextmanager() as session:
+    async with get_db_contextmanager() as session:
         yield session
 
 
@@ -152,7 +152,7 @@ async def e2e_db_session():
     Note: Using a session-scoped DB session in async tests may lead to shared state between tests,
     so use this fixture with caution if tests run concurrently.
     """
-    async with get_postgresql_db_contextmanager() as session:
+    async with get_db_contextmanager() as session:
         yield session
 
 

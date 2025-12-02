@@ -5,20 +5,20 @@ from pydantic import HttpUrl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import get_s3_storage_client, get_jwt_auth_manager
-from src.database.session_postgresql import get_postgresql_db
-from src.database.models.accounts import UserModel, UserProfileModel, GenderEnum, UserGroupModel, UserGroupEnum
-from src.exceptions import BaseSecurityError, S3FileUploadError
-from src.schemas.profiles import ProfileCreateSchema, ProfileResponseSchema
-from src.security.interfaces import JWTAuthManagerInterface
-from src.security.http import get_token
-from src.storages.interfaces import S3StorageInterface
+from config import get_s3_storage_client, get_jwt_auth_manager
+from database import get_db
+from database.models.accounts import UserModel, UserProfileModel, GenderEnum, UserGroupModel, UserGroupEnum
+from exceptions import BaseSecurityError, S3FileUploadError
+from schemas.profiles import ProfileCreateSchema, ProfileResponseSchema
+from security.interfaces import JWTAuthManagerInterface
+from security.http import get_token
+from storages import S3StorageInterface
 
 
-profile_router = APIRouter()
+router = APIRouter()
 
 
-@profile_router.post(
+@router.post(
     "/users/{user_id}/profile/",
     response_model=ProfileResponseSchema,
     summary="Create user profile",
@@ -28,7 +28,7 @@ async def create_profile(
         user_id: int,
         token: str = Depends(get_token),
         jwt_manager: JWTAuthManagerInterface = Depends(get_jwt_auth_manager),
-        db: AsyncSession = Depends(get_postgresql_db),
+        db: AsyncSession = Depends(get_db),
         s3_client: S3StorageInterface = Depends(get_s3_storage_client),
         profile_data: ProfileCreateSchema = Depends(ProfileCreateSchema.from_form)
 ) -> ProfileResponseSchema:

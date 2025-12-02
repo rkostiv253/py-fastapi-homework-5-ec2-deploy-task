@@ -52,7 +52,7 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - .:/usr/src/fastapi
+      - ./src:/usr/src/fastapi
     networks:
       - theater_network
 
@@ -64,7 +64,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - .:/usr/src/fastapi
+      - ./src:/usr/src/fastapi
     env_file:
       - .env
     environment:
